@@ -22,7 +22,7 @@ jobs:
         run: pip install pip-audit
 
       - name: Run pip-audit
-        run: pip-audit --strict --fail on vuln
+        run: pip-audit .
 
   bandit:
     name: Static Analysis (Bandit)
