@@ -143,12 +143,12 @@ class CodebaseIndexer:
                 logger.warning("Unsupported language: %s", lang)
                 continue
 
-            chunks_by_file: dict[str, list[CodeChunk]] = {}
+            lang_chunks: list[CodeChunk] = []
             for path in tqdm(file_paths, desc=f"Parsing {lang}", disable=not show_progress):
                 try:
                     chunks = self._index_file(path, lang)
                     if chunks:
-                        chunks_by_file[str(path)] = chunks
+                        lang_chunks.extend(chunks)
                         result.chunks_created += len(chunks)
                         result.files_indexed += 1
                         result.languages_found.add(lang)
@@ -161,7 +161,8 @@ class CodebaseIndexer:
                     })
 
             # Batch upsert chunks to ChromaDB
-            self._upsert_chunks(chunks_by_lang=chunks_by_file)
+            if lang_chunks:
+                self._upsert_chunks({lang: lang_chunks})
 
         result.duration_seconds = time.time() - start_time
         return result
@@ -199,14 +200,7 @@ class CodebaseIndexer:
 
     def _upsert_chunks(self, chunks_by_lang: dict[str, list[CodeChunk]]) -> None:
         """Batch embed and upsert chunks to ChromaDB per language."""
-        # Group all chunks by language
-        lang_chunks: dict[str, list[CodeChunk]] = {}
         for lang, chunks in chunks_by_lang.items():
-            if lang not in lang_chunks:
-                lang_chunks[lang] = []
-            lang_chunks[lang].extend(chunks)
-
-        for lang, chunks in lang_chunks.items():
             if not chunks:
                 continue
 
