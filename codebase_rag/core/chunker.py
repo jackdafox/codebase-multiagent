@@ -14,6 +14,7 @@ if TYPE_CHECKING:
 
 MAX_FILE_SIZE = 1_000_000  # 1 MB — skip files larger than this
 MAX_CHUNK_LINES = 500     # Lines — skip nodes larger than this
+MAX_CHUNK_CHARS = 24_000  # ~6000 tokens at 4 chars/token — OpenAI limit is 8192 tokens
 
 
 class CodeChunker:
@@ -158,8 +159,19 @@ class CodeChunker:
         ):
             local_enclosing.append(node_name)
 
-        # Extract chunk if this node matches a target type
+        # If this is a target node and not too large, create a chunk.
+        # If too large, recurse into children instead (skip normal recursion below).
         if node_type in target_types:
+            chunk_text = self._node_text(node, content)
+            if len(chunk_text) > MAX_CHUNK_CHARS and node.children:
+                # Split too-large node by its children
+                for child in node.children:
+                    self._walk_tree(
+                        child, content, file_path, language, target_types,
+                        chunks, local_enclosing,
+                    )
+                return  # Children handled, skip bottom recursion
+
             chunk = self._node_to_chunk(
                 node, content, file_path, language, node_type,
                 node_name, ".".join(local_enclosing) if local_enclosing else None,
@@ -167,7 +179,7 @@ class CodeChunker:
             if chunk is not None:
                 chunks.append(chunk)
 
-        # Recurse into children
+        # Recurse into children (unless we already did via a too-large node)
         for child in node.children:
             self._walk_tree(
                 child, content, file_path, language, target_types,
