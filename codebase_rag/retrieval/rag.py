@@ -6,7 +6,7 @@ import logging
 from dataclasses import dataclass, field
 from typing import Any, TYPE_CHECKING
 
-from codebase_rag.core.language import LANGUAGES, is_supported_language
+from codebase_rag.core.language import is_supported_language
 from codebase_rag.db.client import get_client
 from codebase_rag.db.collections import CollectionManager
 from codebase_rag.embeddings.factory import (
@@ -15,8 +15,7 @@ from codebase_rag.embeddings.factory import (
 )
 
 if TYPE_CHECKING:
-    import chromadb
-    from langchain_core.vectorstores import VectorStore
+    pass
 
 logger = logging.getLogger(__name__)
 

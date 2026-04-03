@@ -2,12 +2,9 @@
 
 from __future__ import annotations
 
-from typing import Any, TYPE_CHECKING
+from typing import Any
 
 from chromadb.errors import ChromaError
-
-if TYPE_CHECKING:
-    import chromadb
 
 COLLECTION_NAME_PREFIX = "codebase"
 COLLECTION_SUFFIX = "chunks"
@@ -26,11 +23,11 @@ class CollectionManager:
     enabling targeted retrieval and filtering.
     """
 
-    def __init__(self, client: "chromadb.PersistentClient") -> None:
+    def __init__(self, client: Any) -> None:
         self._client = client
-        self._collections: dict[str, "chromadb.Collection"] = {}
+        self._collections: dict[str, Any] = {}
 
-    def get_collection(self, language: str) -> "chromadb.Collection":
+    def get_collection(self, language: str) -> Any:
         """
         Get or create the ChromaDB collection for a language.
 
@@ -62,6 +59,7 @@ class CollectionManager:
         ids: list[str],
         texts: list[str],
         metadatas: list[dict[str, Any]],
+        embeddings: Any = None,
     ) -> None:
         """
         Upsert chunks into a language-specific collection.
@@ -71,6 +69,7 @@ class CollectionManager:
             ids: Chunk IDs.
             texts: Chunk texts (embedded content).
             metadatas: Per-chunk metadata dicts.
+            embeddings: Pre-computed embedding vectors.
         """
         if not ids:
             return
@@ -80,6 +79,7 @@ class CollectionManager:
             ids=ids,
             documents=texts,
             metadatas=metadatas,
+            embeddings=embeddings,
         )
 
     def query(
@@ -144,8 +144,7 @@ class CollectionManager:
             )
             if results and results.get("ids"):
                 collection.delete(ids=results["ids"])
-        except Exception:
-            # No chunks found for this file — fine
+        except Exception:  # nosec: B110
             pass
 
     def reset(self) -> None:

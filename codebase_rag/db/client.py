@@ -3,22 +3,19 @@
 from __future__ import annotations
 
 import threading
-from typing import TYPE_CHECKING
+from typing import Any
 
 import chromadb
 from chromadb.config import Settings
 
-if TYPE_CHECKING:
-    import chromadb
-
-_CLIENT_INSTANCE: "chromadb.PersistentClient | None" = None
+_CLIENT_INSTANCE: Any = None
 _CLIENT_LOCK = threading.Lock()
 
 
 def get_client(
     persist_directory: str = "./chroma_db",
     settings: Settings | None = None,
-) -> "chromadb.PersistentClient":
+) -> Any:
     """
     Get or create the singleton ChromaDB client.
 

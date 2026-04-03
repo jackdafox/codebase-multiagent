@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import logging
-import os
 import time
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -14,7 +13,6 @@ from tqdm import tqdm
 from codebase_rag.core.chunker import CodeChunker
 from codebase_rag.core.chunk import CodeChunk
 from codebase_rag.core.language import (
-    LANGUAGES,
     detect_language,
     get_glob_patterns,
     is_supported_language,
@@ -23,12 +21,11 @@ from codebase_rag.db.client import get_client
 from codebase_rag.db.collections import CollectionManager
 from codebase_rag.embeddings.factory import (
     DEFAULT_MODEL,
-    OpenAIEmbeddingsFactory,
     get_embedding_function,
 )
 
 if TYPE_CHECKING:
-    import openai
+    pass
 
 logger = logging.getLogger(__name__)
 
@@ -225,13 +222,14 @@ class CodebaseIndexer:
                 batch_texts = texts[i:i + batch_size]
                 batch_metas = metadatas[i:i + batch_size]
 
-                embeddings = self._embedding_factory.embed_texts(batch_texts)
+                batch_embeddings = self._embedding_factory.embed_texts(batch_texts)
 
                 self._collections.upsert(
                     language=lang,
                     ids=batch_ids,
                     texts=batch_texts,
                     metadatas=batch_metas,
+                    embeddings=batch_embeddings,
                 )
 
     def index_file(self, file_path: str, language: str | None = None) -> list[CodeChunk]:

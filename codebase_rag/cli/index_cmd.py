@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import json
-from pathlib import Path
 
 import click
 
@@ -51,7 +50,7 @@ def index(
     # Parse languages
     lang_list: list[str] | None = None
     if languages:
-        lang_list = [l.strip() for l in languages.split(",") if l.strip()]
+        lang_list = [lang.strip() for lang in languages.split(",") if lang.strip()]
 
     # Parse glob overrides
     glob_patterns: dict[str, str] | None = None
@@ -74,7 +73,7 @@ def index(
         show_progress=not no_progress,
     )
 
-    click.echo(f"\nIndexing complete:")
+    click.echo("\nIndexing complete:")
     click.echo(f"  Files indexed:  {result.files_indexed}")
     click.echo(f"  Chunks created: {result.chunks_created}")
     click.echo(f"  Languages:     {', '.join(sorted(result.languages_found)) or 'none'}")

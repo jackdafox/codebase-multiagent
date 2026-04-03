@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import os
 import threading
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, cast
 
 if TYPE_CHECKING:
     import openai
@@ -70,11 +70,10 @@ class OpenAIEmbeddingsFactory:
         if not texts:
             return []
 
-        response = self.client.embeddings.create(
-            model=self._model,
-            input=texts,
-            dimensions=self._dimensions,
-        )
+        kwargs: dict[str, Any] = {"model": self._model, "input": texts}
+        if self._dimensions is not None:
+            kwargs["dimensions"] = self._dimensions
+        response = self.client.embeddings.create(**kwargs)
 
         return [item.embedding for item in response.data]
 
@@ -88,11 +87,10 @@ class OpenAIEmbeddingsFactory:
         Returns:
             Embedding vector.
         """
-        response = self.client.embeddings.create(
-            model=self._model,
-            input=[text],
-            dimensions=self._dimensions,
-        )
+        kwargs: dict[str, Any] = {"model": self._model, "input": [text]}
+        if self._dimensions is not None:
+            kwargs["dimensions"] = self._dimensions
+        response = self.client.embeddings.create(**kwargs)
         return response.data[0].embedding
 
     def __call__(self, texts: list[str]) -> list[list[float]]:

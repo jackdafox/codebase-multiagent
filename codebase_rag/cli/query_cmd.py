@@ -137,4 +137,4 @@ def query(
         click.echo(chunk.text)
 
         if format == "markdown":
-            click.echo(f"\n```")
+            click.echo("\n```")

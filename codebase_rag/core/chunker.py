@@ -2,12 +2,11 @@
 
 from __future__ import annotations
 
-import re
 import uuid
 from typing import TYPE_CHECKING
 
 from codebase_rag.core.chunk import CodeChunk
-from codebase_rag.core.language import get_node_types, is_supported_language
+from codebase_rag.core.language import get_node_types
 from codebase_rag.core.parser_pool import get_parser
 
 if TYPE_CHECKING:
