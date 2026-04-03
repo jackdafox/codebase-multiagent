@@ -3,9 +3,17 @@
 from __future__ import annotations
 
 import logging
+import os
 import sys
+from pathlib import Path
 
 import click
+from dotenv import load_dotenv
+
+# Load .env file from project root
+_env = Path(__file__).resolve().parents[2] / ".env"
+if _env.exists():
+    load_dotenv(_env)
 
 from codebase_rag import __version__
 from codebase_rag.cli.index_cmd import index
