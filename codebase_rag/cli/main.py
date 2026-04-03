@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import logging
 import sys
+from pathlib import Path
 
 import click
 from dotenv import load_dotenv
@@ -19,6 +20,13 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 
+def _load_env() -> None:
+    """Load .env from current working directory."""
+    env_path = Path.cwd() / ".env"
+    if env_path.exists():
+        load_dotenv(env_path)
+
+
 @click.group()
 @click.version_option(version=__version__)
 @click.option(
@@ -30,12 +38,7 @@ logger = logging.getLogger(__name__)
 @click.pass_context
 def cli(ctx: click.Context, persist_dir: str) -> None:
     """codebase-rag — RAG for codebases using ChromaDB, Langchain, and tree-sitter."""
-    # Load .env from project root on every invocation
-    from pathlib import Path
-    _env = Path(__file__).resolve().parents[1] / ".env"
-    if _env.exists():
-        load_dotenv(_env)
-
+    _load_env()
     ctx.ensure_object(dict)
     ctx.obj["persist_dir"] = persist_dir
 
