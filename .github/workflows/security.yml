@@ -49,8 +49,7 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Install TruffleHog
-        run: pip install trufflehog
-
-      - name: Detect secrets
-        run: trufflehog filesystem . --no-update
+      - name: Run Gitleaks
+        uses: gitleaks/gitleaks-action@v2
+        with:
+          args: detect --source . --no-git
