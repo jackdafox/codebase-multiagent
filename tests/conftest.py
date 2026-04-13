@@ -7,7 +7,6 @@ from pathlib import Path
 
 import pytest
 
-from codebase_rag.core.chunk import CodeChunk
 
 
 @pytest.fixture
