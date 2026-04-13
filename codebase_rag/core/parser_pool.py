@@ -6,7 +6,7 @@ import threading
 from contextlib import contextmanager
 from typing import TYPE_CHECKING
 
-import tree_sitter_languages
+import tree_sitter_languages  # type: ignore[import-untyped,attr-defined]
 
 if TYPE_CHECKING:
     from tree_sitter import Language, Parser

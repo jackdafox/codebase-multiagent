@@ -5,7 +5,7 @@ from __future__ import annotations
 import json
 import os
 import re
-from typing import Any
+from typing import Any, cast
 
 from langchain_core.messages import HumanMessage, SystemMessage
 from langchain_openai import ChatOpenAI
@@ -42,13 +42,13 @@ def validator_node(state: dict[str, Any]) -> dict[str, Any]:
         Dict with validation field updated.
     """
     model_name = os.environ.get("VALIDATOR_MODEL", "gpt-4o")
-    api_key = os.environ.get("OPENAI_API_KEY", "")
+    api_key = os.environ.get("OPENAI_API_KEY") or None
     base_url = os.environ.get("OPENAI_BASE_URL", "https://api.openai.com/v1")
     timeout = int(os.environ.get("AGENT_TIMEOUT_SECONDS", "60"))
 
     llm = ChatOpenAI(
         model=model_name,
-        api_key=api_key,
+        api_key=api_key,  # type: ignore[arg-type]
         base_url=base_url,
         timeout=timeout,
         temperature=0.0,
@@ -70,7 +70,8 @@ Respond with your validation as JSON:"""
         response = llm.invoke(
             [SystemMessage(content=SYSTEM_PROMPT), HumanMessage(content=user_message)]
         )
-        validation = _parse_validation(response.content)
+        response_text = cast(str, response.content)
+        validation = _parse_validation(response_text)
     except Exception as exc:  # noqa: BLE001
         validation = {
             "is_valid": False,

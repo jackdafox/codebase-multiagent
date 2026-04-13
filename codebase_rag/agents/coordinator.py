@@ -33,14 +33,14 @@ def build_graph() -> StateGraph:
     graph = StateGraph(AgentState)
 
     # Add nodes
-    graph.add_node("architect", architect.architect_node)
-    graph.add_node("engineer", engineer.engineer_node)
-    graph.add_node("validator", validator.validator_node)
+    graph.add_node("architect", architect.architect_node)  # type: ignore
+    graph.add_node("engineer", engineer.engineer_node)  # type: ignore
+    graph.add_node("validator", validator.validator_node)  # type: ignore
 
     # Edges
-    graph.add_edge(START, "architect")
-    graph.add_edge("architect", "engineer")
-    graph.add_edge("engineer", "validator")
+    graph.add_edge(START, "architect")  # type: ignore
+    graph.add_edge("architect", "engineer")  # type: ignore
+    graph.add_edge("engineer", "validator")  # type: ignore
 
     # Conditional routing from validator
     graph.add_conditional_edges(
@@ -95,7 +95,7 @@ def run(
     }
 
     compiled = build_graph().compile()
-    result: AgentState = compiled.invoke(initial_state)  # type: ignore[arg-type]
+    result: AgentState = compiled.invoke(initial_state)  # type: ignore[assignment]
     return result
 
 

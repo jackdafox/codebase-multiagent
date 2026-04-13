@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import os
-from typing import Any
+from typing import Any, cast
 
 from langchain_core.messages import HumanMessage, SystemMessage
 from langchain_openai import ChatOpenAI
@@ -30,13 +30,13 @@ def architect_node(state: dict[str, Any]) -> dict[str, Any]:
         Dict with plan field updated.
     """
     model_name = os.environ.get("ARCHITECT_MODEL", "gpt-4o")
-    api_key = os.environ.get("OPENAI_API_KEY", "")
+    api_key = os.environ.get("OPENAI_API_KEY") or None
     base_url = os.environ.get("OPENAI_BASE_URL", "https://api.openai.com/v1")
     timeout = int(os.environ.get("AGENT_TIMEOUT_SECONDS", "60"))
 
     llm = ChatOpenAI(
         model=model_name,
-        api_key=api_key,
+        api_key=api_key,  # type: ignore[arg-type]
         base_url=base_url,
         timeout=timeout,
         temperature=0.0,
@@ -62,6 +62,6 @@ Produce your structured plan:"""
     response = llm.invoke(
         [SystemMessage(content=SYSTEM_PROMPT), HumanMessage(content=user_message)]
     )
-    plan = response.content.strip()
+    plan = cast(str, response.content).strip()
 
     return {"plan": plan}

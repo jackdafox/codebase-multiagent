@@ -77,40 +77,48 @@ def dev(
         sys.exit(1)
 
     if format == "json":
-        click.echo(json.dumps(state.to_dict(), indent=2))
+        click.echo(json.dumps(state, indent=2))
         return
 
-    if format == "verbose":
-        click.echo(f"Status: {state.status.value}")
-        click.echo(f"Iterations: {state.iteration}/{state.max_iterations}")
-        if state.plan:
-            click.echo(f"\n--- Architect Plan ---\n{state.plan}")
-        if state.validation.errors:
-            click.echo(f"\n--- Validation Errors ({len(state.validation.errors)}) ---")
-            for err in state.validation.errors:
-                click.echo(f"  • {err}")
-        if state.validation.warnings:
-            click.echo(f"\n--- Warnings ({len(state.validation.warnings)}) ---")
-            for w in state.validation.warnings:
-                click.echo(f"  • {w}")
-        if state.validation.suggestions:
-            click.echo(f"\n--- Suggestions ({len(state.validation.suggestions)}) ---")
-            for s in state.validation.suggestions:
-                click.echo(f"  • {s}")
+    status = state.get("status", "unknown")
+    iteration = state.get("iteration", 0)
+    max_iter = state.get("max_iterations", 3)
+    validation = state.get("validation", {})
+    code = state.get("code", "")
+    error = state.get("error")
+    plan = state.get("plan", "")
 
-    if state.code:
+    if format == "verbose":
+        click.echo(f"Status: {status}")
+        click.echo(f"Iterations: {iteration}/{max_iter}")
+        if plan:
+            click.echo(f"\n--- Architect Plan ---\n{plan}")
+        if validation.get("errors"):
+            click.echo(f"\n--- Validation Errors ({len(validation['errors'])}) ---")
+            for err in validation["errors"]:
+                click.echo(f"  - {err}")
+        if validation.get("warnings"):
+            click.echo(f"\n--- Warnings ({len(validation['warnings'])}) ---")
+            for w in validation["warnings"]:
+                click.echo(f"  - {w}")
+        if validation.get("suggestions"):
+            click.echo(f"\n--- Suggestions ({len(validation['suggestions'])}) ---")
+            for s in validation["suggestions"]:
+                click.echo(f"  - {s}")
+
+    if code:
         click.echo("\n--- Generated Code ---\n")
-        click.echo(state.code)
-    elif state.error:
-        click.echo(f"Error: {state.error}", err=True)
+        click.echo(code)
+    elif error:
+        click.echo(f"Error: {error}", err=True)
         sys.exit(1)
 
-    if not state.validation.is_valid:
+    if not validation.get("is_valid", False):
         click.echo(
-            f"\n⚠ Pipeline did not converge after {state.iteration} iterations.",
+            f"\nWarning: Pipeline did not converge after {iteration} iterations.",
             err=True,
         )
-        if state.validation.errors:
+        if validation.get("errors"):
             click.echo("Validation errors:", err=True)
-            for err in state.validation.errors[:5]:
-                click.echo(f"  • {err}", err=True)
+            for err in validation["errors"][:5]:
+                click.echo(f"  - {err}", err=True)
