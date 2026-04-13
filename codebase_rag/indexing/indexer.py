@@ -1,4 +1,4 @@
-"""CodebaseIndexer — orchestrates indexing source code into ChromaDB."""
+"""CodebaseIndexer -- orchestrates indexing source code into ChromaDB."""
 
 from __future__ import annotations
 
@@ -120,7 +120,7 @@ class CodebaseIndexer:
         if not root.exists():
             raise FileNotFoundError(f"Path does not exist: {root}")
 
-        # Build language → glob pattern map
+        # Build language -> glob pattern map
         patterns = get_glob_patterns(languages, glob_patterns)
 
         # Discover files by language

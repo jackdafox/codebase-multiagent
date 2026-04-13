@@ -35,7 +35,7 @@ LANGUAGES: list[str] = [
     "dockerfile",
 ]
 
-# Extension → language mapping (lowercase, no dot)
+# Extension -> language mapping (lowercase, no dot)
 LANGUAGE_EXTENSIONS: dict[str, str] = {
     ".py": "python",
     ".js": "javascript",
@@ -316,14 +316,14 @@ def get_glob_patterns(
     custom: dict[str, str] | None = None,
 ) -> dict[str, str]:
     """
-    Build a mapping of language → glob pattern for file discovery.
+    Build a mapping of language -> glob pattern for file discovery.
 
     Args:
         languages: List of languages to include (None = all supported).
         custom: Override patterns for specific languages.
 
     Returns:
-        Dict mapping language → glob pattern string.
+        Dict mapping language -> glob pattern string.
     """
     patterns = {}
     for lang in LANGUAGES:

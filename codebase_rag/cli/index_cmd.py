@@ -21,7 +21,7 @@ from codebase_rag.indexing.indexer import CodebaseIndexer
     "--glob",
     "-g",
     default=None,
-    help="JSON dict of language→glob pattern overrides.",
+    help="JSON dict of language->glob pattern overrides.",
 )
 @click.option(
     "--batch-size",

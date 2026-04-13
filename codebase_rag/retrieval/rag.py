@@ -1,4 +1,4 @@
-"""CodebaseRAG — querying and context retrieval from indexed codebases."""
+"""CodebaseRAG -- querying and context retrieval from indexed codebases."""
 
 from __future__ import annotations
 

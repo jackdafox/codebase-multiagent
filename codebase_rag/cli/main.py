@@ -10,12 +10,13 @@ import click
 from dotenv import load_dotenv
 
 from codebase_rag import __version__
+from codebase_rag.cli.dev_cmd import dev
 from codebase_rag.cli.index_cmd import index
 from codebase_rag.cli.query_cmd import query
 
 logging.basicConfig(
     level=logging.INFO,
-    format="%(asctime)s — %(name)s — %(levelname)s — %(message)s",
+    format="%(asctime)s -- %(name)s -- %(levelname)s -- %(message)s",
 )
 logger = logging.getLogger(__name__)
 
@@ -37,12 +38,13 @@ def _load_env() -> None:
 )
 @click.pass_context
 def cli(ctx: click.Context, persist_dir: str) -> None:
-    """codebase-rag — RAG for codebases using ChromaDB, Langchain, and tree-sitter."""
+    """codebase-rag -- RAG for codebases using ChromaDB, Langchain, and tree-sitter."""
     _load_env()
     ctx.ensure_object(dict)
     ctx.obj["persist_dir"] = persist_dir
 
 
+cli.add_command(dev)
 cli.add_command(index)
 cli.add_command(query)
 
