@@ -1,4 +1,4 @@
-"""CodeChunker — converts tree-sitter parse trees into CodeChunk units."""
+"""CodeChunker -- converts tree-sitter parse trees into CodeChunk units."""
 
 from __future__ import annotations
 
@@ -12,9 +12,9 @@ from codebase_rag.core.parser_pool import get_parser
 if TYPE_CHECKING:
     from tree_sitter import Node, Tree
 
-MAX_FILE_SIZE = 1_000_000  # 1 MB — skip files larger than this
-MAX_CHUNK_LINES = 500     # Lines — skip nodes larger than this
-MAX_CHUNK_CHARS = 24_000  # ~6000 tokens at 4 chars/token — OpenAI limit is 8192 tokens
+MAX_FILE_SIZE = 1_000_000  # 1 MB -- skip files larger than this
+MAX_CHUNK_LINES = 500     # Lines -- skip nodes larger than this
+MAX_CHUNK_CHARS = 24_000  # ~6000 tokens at 4 chars/token -- OpenAI limit is 8192 tokens
 
 
 class CodeChunker:
@@ -63,7 +63,7 @@ class CodeChunker:
         content: bytes,
         language: str,
     ) -> list[CodeChunk]:
-        """Fallback for files too large to parse normally — whole file as one chunk."""
+        """Fallback for files too large to parse normally -- whole file as one chunk."""
         return self._fallback_chunk(file_path, content, language)
 
     def _fallback_chunk(
@@ -284,7 +284,7 @@ class CodeChunker:
                 if child.type == "identifier":
                     return self._node_text(child, content)
         elif node.type == "impl_item":
-            # impl Foo { ... } — extract "Foo"
+            # impl Foo { ... } -- extract "Foo"
             name_found = False
             for child in node.children:
                 if name_found and child.type == "identifier":
@@ -343,7 +343,7 @@ class CodeChunker:
         return None
 
     def _generic_node_name(self, node: "Node", content: bytes) -> str | None:
-        """Fallback name extraction — looks for identifier-like children."""
+        """Fallback name extraction -- looks for identifier-like children."""
         for child in node.children:
             if child.type in ("identifier", "type_identifier", "field_identifier"):
                 return self._node_text(child, content)

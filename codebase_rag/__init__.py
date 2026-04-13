@@ -1,4 +1,4 @@
-"""Codebase RAG — Retrieval Augmented Generation for codebases."""
+"""Codebase RAG -- Retrieval Augmented Generation for codebases."""
 
 from codebase_rag.core.chunk import CodeChunk
 from codebase_rag.indexing.indexer import CodebaseIndexer

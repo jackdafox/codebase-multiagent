@@ -1,4 +1,4 @@
-"""CodeChunk dataclass — the fundamental data unit for the RAG system."""
+"""CodeChunk dataclass -- the fundamental data unit for the RAG system."""
 
 from __future__ import annotations
 
