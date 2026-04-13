@@ -7,7 +7,6 @@ from codebase_rag.core.language import (
     get_glob_patterns,
     get_node_types,
     is_supported_language,
-    LANGUAGE_EXTENSIONS,
     LANGUAGES,
 )
 
