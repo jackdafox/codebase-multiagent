@@ -1,13 +1,14 @@
-"""Validator agent -- validates generated code, returns errors or approval."""
+"""Validator agent -- validates generated code using LangChain."""
 
 from __future__ import annotations
 
-import logging
+import json
+import os
+import re
+from typing import Any
 
-from codebase_rag.agents.factory import get_client
-from codebase_rag.agents.state import AgentState, ValidationResult
-
-logger = logging.getLogger(__name__)
+from langchain_core.messages import HumanMessage, SystemMessage
+from langchain_openai import ChatOpenAI
 
 SYSTEM_PROMPT = """You are a senior code reviewer. Your job is to rigorously validate generated code.
 
@@ -20,87 +21,80 @@ Check for:
 6. **Dependencies** -- imports exist, no circular deps
 
 Respond ONLY with a JSON object (no markdown, no explanation outside JSON):
-{{
+{
   "is_valid": true or false,
   "errors": ["list of critical errors that must be fixed"],
   "warnings": ["list of non-critical issues"],
   "suggestions": ["list of improvement suggestions"]
-}}
+}
 
 If the code is acceptable, set is_valid: true with empty errors."""
 
 
-def run(state: AgentState) -> AgentState:
+def validator_node(state: dict[str, Any]) -> dict[str, Any]:
     """
-    Run the Validator agent.
-
-    Evaluates the Engineer's code and updates state.validation.
+    Validator node -- evaluates the Engineer's code.
 
     Args:
-        state: Current agent state (must have code set).
+        state: Current graph state (must have code, language).
 
     Returns:
-        Updated state with validation result filled in.
+        Dict with validation field updated.
     """
-    client = get_client("validator")
-    model = getattr(client, "_model", "?") or "?"
-    logger.info("Validator (model=%s) validating code (%d chars)", model, len(state.code))
+    model_name = os.environ.get("VALIDATOR_MODEL", "gpt-4o")
+    api_key = os.environ.get("OPENAI_API_KEY", "")
+    base_url = os.environ.get("OPENAI_BASE_URL", "https://api.openai.com/v1")
+    timeout = int(os.environ.get("AGENT_TIMEOUT_SECONDS", "60"))
 
-    user_prompt = f"""## Code to Validate
-Target language: {state.language}
+    llm = ChatOpenAI(
+        model=model_name,
+        api_key=api_key,
+        base_url=base_url,
+        timeout=timeout,
+        temperature=0.0,
+    )
+
+    code = state.get("code", "")
+    language = state.get("language", "python")
+
+    user_message = f"""## Code to Validate
+Target language: {language}
 
 ---
-{state.code}
+{code}
 ---
 
 Respond with your validation as JSON:"""
 
     try:
-        response = client.complete(
-            prompt=user_prompt,
-            system=SYSTEM_PROMPT,
-            temperature=0.0,
-            max_tokens=1024,
+        response = llm.invoke(
+            [SystemMessage(content=SYSTEM_PROMPT), HumanMessage(content=user_message)]
         )
-        state.validation = _parse_validation(response)
-        logger.info(
-            "Validator result: is_valid=%s, errors=%d, warnings=%d",
-            state.validation.is_valid,
-            len(state.validation.errors),
-            len(state.validation.warnings),
-        )
-    except Exception as exc:
-        logger.error("Validator failed: %s -- treating as invalid", exc)
-        state.validation = ValidationResult(
-            is_valid=False,
-            errors=[f"Validator error: {exc}"],
-        )
+        validation = _parse_validation(response.content)
+    except Exception as exc:  # noqa: BLE001
+        validation = {
+            "is_valid": False,
+            "errors": [f"Validator error: {exc}"],
+            "warnings": [],
+            "suggestions": [],
+        }
 
-    return state
+    return {"validation": validation}
 
 
-def _parse_validation(response: str) -> ValidationResult:
+def _parse_validation(text: str) -> dict[str, Any]:
     """Parse the JSON response from the Validator LLM."""
-    import json
-    import re
-
-    # Try to extract JSON from the response (LLM might wrap in ```json ```)
-    text = response.strip()
-    json_match = re.search(r"\{[\s\S]*\}", text)
+    # Try to extract JSON from the response
+    json_match = re.search(r"\{[\s\S]*\}", text.strip())
     if json_match:
         try:
-            data = json.loads(json_match.group())
-            return ValidationResult(
-                is_valid=bool(data.get("is_valid", False)),
-                errors=data.get("errors", []),
-                warnings=data.get("warnings", []),
-                suggestions=data.get("suggestions", []),
-            )
+            return json.loads(json_match.group())
         except json.JSONDecodeError:
             pass
 
-    # Fallback: treat as invalid if we can't parse
-    return ValidationResult(
-        is_valid=False,
-        errors=[f"Could not parse validator response: {text[:200]}"],
-    )
+    return {
+        "is_valid": False,
+        "errors": [f"Could not parse validator response: {text[:200]}"],
+        "warnings": [],
+        "suggestions": [],
+    }

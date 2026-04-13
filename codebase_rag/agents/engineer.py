@@ -1,13 +1,12 @@
-"""Engineer agent -- generates code based on the Architect's plan."""
+"""Engineer agent -- generates code based on the Architect's plan using LangChain."""
 
 from __future__ import annotations
 
-import logging
+import os
+from typing import Any
 
-from codebase_rag.agents.factory import get_client
-from codebase_rag.agents.state import AgentState
-
-logger = logging.getLogger(__name__)
+from langchain_core.messages import HumanMessage, SystemMessage
+from langchain_openai import ChatOpenAI
 
 SYSTEM_PROMPT = """You are a senior software engineer. Your job is to write high-quality code based on the architect's plan.
 
@@ -19,7 +18,42 @@ Generate clean, working code that:
 
 Return ONLY the code -- no markdown code fences unless specifically requested."""
 
-USER_TEMPLATE = """## User Request
+
+def engineer_node(state: dict[str, Any]) -> dict[str, Any]:
+    """
+    Engineer node -- generates code from the Architect's plan.
+
+    Args:
+        state: Current graph state (must have query, language, plan, context).
+
+    Returns:
+        Dict with code field updated, and iteration incremented.
+    """
+    model_name = os.environ.get("ENGINEER_MODEL", "gpt-4o")
+    api_key = os.environ.get("OPENAI_API_KEY", "")
+    base_url = os.environ.get("OPENAI_BASE_URL", "https://api.openai.com/v1")
+    timeout = int(os.environ.get("AGENT_TIMEOUT_SECONDS", "60"))
+
+    llm = ChatOpenAI(
+        model=model_name,
+        api_key=api_key,
+        base_url=base_url,
+        timeout=timeout,
+        temperature=0.2,
+    )
+
+    query = state["query"]
+    language = state.get("language", "python")
+    plan = state.get("plan", "(no plan -- use general knowledge)")
+    context = state.get("context", "") or "(no context retrieved)"
+    iteration = state.get("iteration", 0)
+
+    # Build feedback from previous validation errors (if any)
+    validation = state.get("validation", {})
+    prev_errors = validation.get("errors", []) if isinstance(validation, dict) else []
+    feedback = "\n".join(prev_errors) if prev_errors and iteration > 0 else "none"
+
+    user_message = f"""## User Request
 {query}
 
 ## Target Language
@@ -29,7 +63,6 @@ USER_TEMPLATE = """## User Request
 {plan}
 
 ## Retrieved Code Context
-(relevant existing code from the codebase)
 ---
 {context}
 ---
@@ -42,51 +75,12 @@ USER_TEMPLATE = """## User Request
 
 Generate the code now:"""
 
-
-def run(state: AgentState) -> AgentState:
-    """
-    Run the Engineer agent.
-
-    Generates code from the Architect's plan and RAG context.
-    If validation feedback exists from a previous iteration, includes it.
-
-    Args:
-        state: Current agent state (must have plan, context set).
-
-    Returns:
-        Updated state with code filled in.
-    """
-    client = get_client("engineer")
-    model = getattr(client, "_model", "?") or "?"
-    logger.info(
-        "Engineer (model=%s, iter=%d) generating code",
-        model, state.iteration,
+    response = llm.invoke(
+        [SystemMessage(content=SYSTEM_PROMPT), HumanMessage(content=user_message)]
     )
+    code = response.content.strip()
 
-    feedback = ""
-    if state.validation.errors and state.iteration > 0:
-        feedback = "\n".join(state.validation.errors)
-
-    user_prompt = USER_TEMPLATE.format(
-        query=state.query,
-        language=state.language,
-        plan=state.plan or "(no plan -- use general knowledge)",
-        context=state.context or "(no context retrieved)",
-        feedback=feedback or "none",
-    )
-
-    try:
-        code = client.complete(
-            prompt=user_prompt,
-            system=SYSTEM_PROMPT,
-            temperature=0.2,
-            max_tokens=4096,
-        )
-        state.code = code.strip()
-        logger.info("Engineer produced code (%d chars)", len(state.code))
-    except Exception as exc:
-        logger.error("Engineer failed: %s", exc)
-        state.error = f"Engineer error: {exc}"
-        state.status = state.status.FAILED
-
-    return state
+    return {
+        "code": code,
+        "iteration": iteration + 1,
+    }
